@@ -8,7 +8,7 @@ import {
   isAncestor,
   resolveRef,
 } from "../git.js";
-import { ensureInstanceRunning, runMiner } from "../gcp.js";
+import { ensureInstanceRunning, runMiner, warmUpInstance } from "../gcp.js";
 import { templateVariations } from "../template.js";
 import { simpleGit, SimpleGit } from "simple-git";
 
@@ -30,6 +30,9 @@ export async function rebase(targetRef: string, template: string): Promise<void>
     console.error("❌ Must be on a branch (not detached HEAD)");
     process.exit(1);
   }
+
+  // Start warming up instance in background (fire-and-forget)
+  warmUpInstance();
 
   // Resolve target
   let targetSha: string;

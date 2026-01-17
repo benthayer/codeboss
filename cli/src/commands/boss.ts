@@ -12,7 +12,7 @@ import {
   getHead,
   amendCommit,
 } from "../git.js";
-import { ensureInstanceRunning, runMiner } from "../gcp.js";
+import { ensureInstanceRunning, runMiner, warmUpInstance } from "../gcp.js";
 import { templateVariations } from "../template.js";
 
 // =============================================================================
@@ -36,6 +36,9 @@ export async function boss(template: string): Promise<void> {
     console.error("❌ Need at least 2 commits (current commit has no parent)");
     process.exit(1);
   }
+
+  // Start warming up instance in background (fire-and-forget)
+  warmUpInstance();
 
   // Get commit info
   const commitIdentity = await getCommitIdentity();

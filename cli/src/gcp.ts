@@ -106,6 +106,35 @@ export async function ensureInstanceRunning(): Promise<void> {
   }
 }
 
+/**
+ * Fire-and-forget: start warming up the instance in the background.
+ * Does not wait for completion. Call ensureInstanceRunning() later to await.
+ */
+export function warmUpInstance(): void {
+  // Fire and forget - don't await
+  getInstanceStatus().then((status) => {
+    if (status === "SUSPENDED") {
+      execa("gcloud", [
+        "compute",
+        "instances",
+        "resume",
+        CONFIG.gcpInstance,
+        `--zone=${CONFIG.gcpZone}`,
+        "--quiet",
+      ]).catch(() => {}); // Ignore errors, ensureInstanceRunning will handle
+    } else if (status === "STOPPED" || status === "TERMINATED") {
+      execa("gcloud", [
+        "compute",
+        "instances",
+        "start",
+        CONFIG.gcpInstance,
+        `--zone=${CONFIG.gcpZone}`,
+        "--quiet",
+      ]).catch(() => {});
+    }
+  });
+}
+
 // =============================================================================
 // Mining
 // =============================================================================

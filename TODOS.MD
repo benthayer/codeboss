@@ -1,0 +1,4 @@
+- Does rebase fix he individual commit
+- Does rebase replay the new commits and make sure that they're c0deb055 also?
+- Does it actually shut down properly
+- Can I rebase and redo a commit message?

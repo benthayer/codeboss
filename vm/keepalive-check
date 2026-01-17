@@ -1,9 +1,9 @@
 #!/bin/bash
-# Cron script that suspends the VM if idle for >2.5 minutes
+# Cron script that suspends the VM if idle for too long
 # Install: * * * * * /usr/local/bin/keepalive-check
 
 KEEPALIVE=/tmp/keepalive
-MAX_AGE=150  # 2.5 minutes in seconds
+MAX_AGE=179  # ~3 minutes in seconds
 
 # If no file exists, create it (first boot grace period)
 if [[ ! -f $KEEPALIVE ]]; then

@@ -1,0 +1,26 @@
+{
+  "name": "codeboss",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "codeboss": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "commander": "^12.0.0",
+    "dotenv": "^16.0.0",
+    "execa": "^9.0.0",
+    "simple-git": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

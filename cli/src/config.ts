@@ -34,7 +34,7 @@ export const CONFIG = {
 
   // Mining parameters
   inverseDesiredFailureRate: parseInt(
-    optional("INVERSE_DESIRED_FAILURE_RATE", "100000"),
+    optional("INVERSE_DESIRED_FAILURE_RATE", "100_000").replace(/_/g, ""),
     10
   ),
   target: optional("TARGET", "c0deb055"),

@@ -69,6 +69,8 @@ export async function rebase(targetRef: string, template: string): Promise<void>
 
   await execa("git", ["worktree", "add", worktree, targetSha, "--detach", "--quiet"]);
 
+  let newTargetSha: string;
+
   try {
     // Get commit info from worktree
     const wtGit: SimpleGit = simpleGit(worktree);
@@ -114,13 +116,11 @@ export async function rebase(targetRef: string, template: string): Promise<void>
     });
 
     // Get new SHA
-    const newTargetSha = (await wtGit.revparse(["HEAD"])).trim();
-
-    console.log();
-    console.log(`📁 Cleaning up worktree`);
+    newTargetSha = (await wtGit.revparse(["HEAD"])).trim();
 
   } finally {
     // Clean up worktree
+    console.log(`📁 Cleaning up worktree`);
     try {
       await execa("git", ["worktree", "remove", worktree, "--force"]);
     } catch {
@@ -128,20 +128,27 @@ export async function rebase(targetRef: string, template: string): Promise<void>
     }
   }
 
-  // Replay commits
-  if (commitsToReplay.length > 0) {
-    console.log(`🔀 Replaying ${commitsToReplay.length} commit(s)...`);
+  // Reset to new bossed commit and replay
+  console.log(`🔀 Resetting to bossed commit ${newTargetSha.slice(0, 7)}...`);
+  await git.reset(["--hard", newTargetSha]);
 
-    // Get the new base from worktree (before we deleted it... oops)
-    // TODO: Fix this - we need to get newTargetSha before cleanup
+  // Cherry-pick commits to replay
+  if (commitsToReplay.length > 0) {
+    console.log(`🍒 Cherry-picking ${commitsToReplay.length} commit(s)...`);
+    for (const sha of commitsToReplay) {
+      await git.raw(["cherry-pick", sha]);
+    }
   }
+
+  const finalHash = (await git.revparse(["HEAD"])).trim();
 
   console.log();
   console.log("✅ Done!");
+  console.log(`   Bossed: ${newTargetSha.slice(0, 7)} → ${newTargetSha}`);
   if (commitsToReplay.length > 0) {
-    console.log(`   ${commitsToReplay.length} commit(s) replayed with new hashes`);
+    console.log(`   Replayed: ${commitsToReplay.length} commit(s)`);
   }
-  console.log("   Run codeboss boss '<template>' to boss the new HEAD if needed");
+  console.log(`   HEAD: ${finalHash}`);
 }
 
 // =============================================================================

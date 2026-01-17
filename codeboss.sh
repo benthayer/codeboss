@@ -25,7 +25,8 @@ main() {
     print_job_info "$template"
     ensure_instance_running
     
-    local message=$(mine_vanity_message "$template")
+    local message
+    message=$(mine_vanity_message "$template") || exit $?
     
     amend_commit "$message"
     verify_vanity_hash

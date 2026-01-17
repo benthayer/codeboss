@@ -60,13 +60,28 @@ resume_instance() {
     sleep 15
 }
 
+wait_for_stable_state() {
+    local status
+    while true; do
+        status=$(get_instance_status)
+        case "$status" in
+            RUNNING|SUSPENDED|TERMINATED|STOPPED|NOT_FOUND) 
+                echo "$status"
+                return ;;
+            *)
+                echo "⏳ Instance is $status, waiting..." >&2
+                sleep 5 ;;
+        esac
+    done
+}
+
 ensure_instance_running() {
-    local status=$(get_instance_status)
+    local status=$(wait_for_stable_state)
     
     case "$status" in
         RUNNING)   return ;;
         SUSPENDED) resume_instance ;;
-        *)         echo "❌ Instance not available (status: $status)"; exit 1 ;;
+        *)         echo "❌ Instance not available (status: $status)" >&2; exit 1 ;;
     esac
 }
 
@@ -180,9 +195,27 @@ validate_args() {
     fi
 }
 
+validate_git_repo() {
+    if ! git rev-parse --git-dir &>/dev/null; then
+        echo "❌ Not in a git repository" >&2
+        exit 1
+    fi
+    
+    if ! git rev-parse HEAD &>/dev/null; then
+        echo "❌ No commits in repository" >&2
+        exit 1
+    fi
+    
+    if ! git rev-parse HEAD^ &>/dev/null; then
+        echo "❌ Need at least 2 commits (current commit has no parent)" >&2
+        exit 1
+    fi
+}
+
 # =============================================================================
 # Entry
 # =============================================================================
 
 validate_args "$@"
+validate_git_repo
 main "$@"

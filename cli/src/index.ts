@@ -32,9 +32,17 @@ program
 program
   .command("rebase <commit> <template>")
   .description("Make a commit in the chain have a vanity hash, replaying subsequent commits")
-  .action(async (commit: string, template: string) => {
+  .requiredOption(
+    "--time <mode>",
+    "Time handling: 'preserve' keeps original timestamps, 'now' uses current time"
+  )
+  .action(async (commit: string, template: string, options: { time: string }) => {
+    if (options.time !== "preserve" && options.time !== "now") {
+      console.error("❌ --time must be 'preserve' or 'now'");
+      process.exit(1);
+    }
     try {
-      await rebase(commit, template);
+      await rebase(commit, template, options.time as "preserve" | "now");
     } catch (error: any) {
       console.error(`❌ Error: ${error.message}`);
       process.exit(1);

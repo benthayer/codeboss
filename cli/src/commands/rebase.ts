@@ -18,7 +18,11 @@ const git = simpleGit();
 // Rebase Command
 // =============================================================================
 
-export async function rebase(targetRef: string, template: string): Promise<void> {
+export async function rebase(
+  targetRef: string,
+  template: string,
+  timeMode: "preserve" | "now"
+): Promise<void> {
   // Validate git state
   if (!(await isGitRepo())) {
     console.error("❌ Not in a git repository");
@@ -63,6 +67,7 @@ export async function rebase(targetRef: string, template: string): Promise<void>
 
   console.log(`🎯 Target: ${targetRef} (${targetSha.slice(0, 7)})`);
   console.log(`📝 Template: ${template}`);
+  console.log(`⏰ Time mode: ${timeMode}`);
   console.log(`🔀 Commits to replay: ${commitsToReplay.length}`);
   console.log();
 
@@ -80,7 +85,11 @@ export async function rebase(targetRef: string, template: string): Promise<void>
     const commitIdentity = await getCommitIdentityFromWorktree(wtGit);
     const parentHash = await getParentHashFromWorktree(wtGit);
     const author = await getAuthorStringFromWorktree(wtGit);
-    const { timestamp, timezone } = await getAuthorTimeFromWorktree(wtGit);
+    
+    // Get timestamp based on mode
+    const { timestamp, timezone } = timeMode === "preserve"
+      ? await getAuthorTimeFromWorktree(wtGit)
+      : getCurrentTime();
 
     // Save to database
     saveBossification(commitIdentity, template);
@@ -139,7 +148,11 @@ export async function rebase(targetRef: string, template: string): Promise<void>
   if (commitsToReplay.length > 0) {
     console.log(`🍒 Cherry-picking ${commitsToReplay.length} commit(s)...`);
     for (const sha of commitsToReplay) {
-      await git.raw(["cherry-pick", sha]);
+      // preserve: keep original author date, now: reset to current time
+      const cherryPickArgs = timeMode === "now"
+        ? ["cherry-pick", "--ignore-date", sha]
+        : ["cherry-pick", sha];
+      await git.raw(cherryPickArgs);
     }
   }
 
@@ -197,6 +210,17 @@ async function getAuthorTimeFromWorktree(wtGit: SimpleGit): Promise<{ timestamp:
     wtGit.raw(["log", "-1", "--format=%ai"]).then((r: string) => r.trim()),
   ]);
   const timezone = dateStr.split(" ")[2] || "+0000";
+  return { timestamp, timezone };
+}
+
+function getCurrentTime(): { timestamp: string; timezone: string } {
+  const now = new Date();
+  const timestamp = Math.floor(now.getTime() / 1000).toString();
+  const offsetMinutes = now.getTimezoneOffset();
+  const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
+  const offsetMins = Math.abs(offsetMinutes % 60);
+  const sign = offsetMinutes <= 0 ? "+" : "-";
+  const timezone = `${sign}${offsetHours.toString().padStart(2, "0")}${offsetMins.toString().padStart(2, "0")}`;
   return { timestamp, timezone };
 }
 

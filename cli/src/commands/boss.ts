@@ -63,7 +63,13 @@ export async function boss(template: string): Promise<void> {
   console.log(`👤 Author: ${author}`);
   console.log(`⏰ Time: ${timestamp} ${timezone}`);
   console.log(
-    `🎲 Entropy: ${validation.entropyBits.toFixed(1)} bits (${variations.toLocaleString()} variations)`
+    `🎰 Desired failure rate: 1 in ${CONFIG.inverseDesiredFailureRate.toLocaleString()}`
+  );
+  console.log(
+    `📊 Required entropy: ${validation.requiredEntropyBits.toFixed(1)} bits (${validation.requiredVariations.toLocaleString()} variations)`
+  );
+  console.log(
+    `🎲 Template entropy: ${validation.entropyBits.toFixed(1)} bits (${variations.toLocaleString()} variations)`
   );
   console.log();
 

@@ -80,9 +80,9 @@ export function saveBossification(
 }
 
 /**
- * Get the bossification for a commit, if it exists.
+ * Look up the saved template for a commit, if it exists.
  */
-export function getBossification(
+export function lookupSavedTemplate(
   commit: CommitIdentity
 ): Bossification | null {
   const db = getDb();

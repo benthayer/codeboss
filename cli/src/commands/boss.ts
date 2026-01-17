@@ -1,5 +1,5 @@
 import { CONFIG } from "../config.js";
-import { saveBossification } from "../db.js";
+import { saveBossification, lookupSavedTemplate } from "../db.js";
 import { validateEntropy, formatEntropyError } from "../entropy.js";
 import {
   isGitRepo,
@@ -19,7 +19,7 @@ import { templateVariations } from "../template.js";
 // Boss Command
 // =============================================================================
 
-export async function boss(template: string): Promise<void> {
+export async function boss(templateArg?: string): Promise<void> {
   // Validate git state
   if (!(await isGitRepo())) {
     console.error("❌ Not in a git repository");
@@ -45,6 +45,13 @@ export async function boss(template: string): Promise<void> {
   const parentHash = await getParentHash();
   const author = await getAuthorString();
   const { timestamp, timezone } = await getAuthorTime();
+
+  // Resolve template: use provided or lookup saved
+  const template = templateArg ?? lookupSavedTemplate(commitIdentity)?.template;
+  if (!template) {
+    console.error("❌ No template provided and no saved template found for this commit");
+    process.exit(1);
+  }
 
   // Validate entropy locally
   const variations = templateVariations(template);

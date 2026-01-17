@@ -1,0 +1,35 @@
+#!/bin/bash
+# Cron script that suspends the VM if idle for >2.5 minutes
+# Install: * * * * * /usr/local/bin/keepalive-check
+
+KEEPALIVE=/tmp/keepalive
+MAX_AGE=150  # 2.5 minutes in seconds
+
+# If no file exists, create it (first boot grace period)
+if [[ ! -f $KEEPALIVE ]]; then
+    touch $KEEPALIVE
+    exit 0
+fi
+
+# Check age
+AGE=$(( $(date +%s) - $(stat -c %Y $KEEPALIVE) ))
+
+if [[ $AGE -gt $MAX_AGE ]]; then
+    rm -f $KEEPALIVE
+    
+    # Get instance metadata
+    PROJECT=$(curl -s -H "Metadata-Flavor: Google" \
+      http://metadata.google.internal/computeMetadata/v1/project/project-id)
+    ZONE=$(curl -s -H "Metadata-Flavor: Google" \
+      http://metadata.google.internal/computeMetadata/v1/instance/zone | cut -d/ -f4)
+    INSTANCE=$(curl -s -H "Metadata-Flavor: Google" \
+      http://metadata.google.internal/computeMetadata/v1/instance/name)
+    TOKEN=$(curl -s -H "Metadata-Flavor: Google" \
+      http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token \
+      | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
+    
+    # Suspend via GCP API
+    curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+      "https://compute.googleapis.com/compute/v1/projects/$PROJECT/zones/$ZONE/instances/$INSTANCE/suspend"
+fi
+

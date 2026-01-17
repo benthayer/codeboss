@@ -1,0 +1,5 @@
+#!/bin/bash
+# Wrapper that touches keepalive then runs the miner
+touch /tmp/keepalive
+exec ./codeboss "$@"
+

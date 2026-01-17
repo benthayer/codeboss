@@ -2,8 +2,8 @@ import { config } from "dotenv";
 import { resolve } from "path";
 import { homedir } from "os";
 
-// Load .env from CLI directory
-config({ path: resolve(import.meta.dirname, "../.env") });
+// Load .env from project root
+config({ path: resolve(import.meta.dirname, "../../.env") });
 
 function required(name: string): string {
   const value = process.env[name];

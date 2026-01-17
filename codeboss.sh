@@ -76,8 +76,8 @@ ensure_instance_running() {
 mine_vanity_message() {
     local template="$1"
     
-    echo "⛏️  Mining..."
-    echo
+    echo "⛏️  Mining..." >&2
+    echo >&2
     
     local output=$(run_remote_miner "$template")
     
@@ -101,13 +101,13 @@ validate_miner_output() {
     local output="$1"
     
     if echo "$output" | grep -q "not enough entropy"; then
-        echo "$output"
+        echo "$output" >&2
         exit 2
     fi
     
     if ! echo "$output" | grep -q "^Found in"; then
-        echo "$output"
-        echo "❌ Mining failed"
+        echo "$output" >&2
+        echo "❌ Mining failed" >&2
         exit 1
     fi
 }
@@ -117,7 +117,7 @@ extract_message() {
     local message=$(echo "$output" | tail -1)
     
     if [[ -z "$message" ]]; then
-        echo "❌ No message returned"
+        echo "❌ No message returned" >&2
         exit 1
     fi
     
